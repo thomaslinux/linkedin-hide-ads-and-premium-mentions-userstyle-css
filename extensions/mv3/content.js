@@ -1,87 +1,93 @@
-let currentStyle = null;
-let styleElement = null;
+(async () => {
+  const { userstyleCSS, userstyleVars } = await chrome.storage.local.get([
+    "userstyleCSS",
+    "userstyleVars",
+  ]);
+  if (!userstyleCSS || !userstyleVars) return;
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "updateSettings") {
-    updateCSS(message.settings);
-  }
-});
+  const finalCSS = buildCSS(userstyleCSS, userstyleVars);
 
-async function init() {
-  const settings = JSON.parse(localStorage.getItem("settings") || "{}");
-  await updateCSS(settings);
+  const styleEl = document.createElement("style");
+  styleEl.setAttribute("data-linkedin-userstyle", "true");
+  styleEl.textContent = finalCSS;
+  document.documentElement.appendChild(styleEl);
 
-  // Watch for storage changes
-  window.addEventListener("storage", (e) => {
-    if (e.key === "settings") {
-      const newSettings = JSON.parse(e.newValue || "{}");
-      updateCSS(newSettings);
+  // Re-apply when popup changes settings
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.type === "rebuildCSS") {
+      chrome.storage.local.get(
+        ["userstyleCSS", "userstyleVars"],
+        ({ userstyleCSS, userstyleVars }) => {
+          const css = buildCSS(userstyleCSS, userstyleVars);
+          styleEl.textContent = css;
+        },
+      );
     }
   });
-}
+})();
 
-async function updateCSS(settings) {
-  if (styleElement) {
-    styleElement.remove();
-  }
+/**
+ * Very simple parser tailored to this style:
+ * @-moz-document domain("linkedin.com") {
+ *   if varName {
+ *     ...
+ *   }
+ *   if otherVar {
+ *     ...
+ *   }
+ * }
+ */
+function buildCSS(source, varsState) {
+  // Remove header comment and @-moz-document wrapper
+  let code = source;
 
-  // Fetch latest style code
-  try {
-    const response = await fetch("https://userstyles.world/api/style/25558");
-    const data = await response.json();
-    const code = data.data.code;
+  // Remove leading comment block
+  code = code.replace(/\/\*[\s\S]*?\*\//, "");
 
-    // Parse and build CSS based on settings
-    const css = parseAndBuildCSS(code, settings);
+  // Extract inside of @-moz-document
+  const docMatch = code.match(/@-moz-document[^{]+\{([\s\S]*)\}\s*$/);
+  if (!docMatch) return "";
+  code = docMatch[1];
 
-    styleElement = document.createElement("style");
-    styleElement.textContent = css;
-    document.head.appendChild(styleElement);
-  } catch (error) {
-    console.error("Failed to update LinkedIn Hider CSS:", error);
-  }
-}
+  let result = "";
 
-function parseAndBuildCSS(code, settings) {
-  const lines = code.split("\n");
-  let css = "";
-  let inCssBlock = false;
+  const ifRegex = /if\s+([a-zA-Z0-9_]+)\s*\{/g;
+  let lastIndex = 0;
+  let m;
 
-  lines.forEach((line) => {
-    // Skip header
-    if (line.includes("==/UserStyle==")) {
-      return;
-    }
+  while ((m = ifRegex.exec(code)) !== null) {
+    const varName = m[1];
+    const startBlock = ifRegex.lastIndex;
 
-    // Start of CSS block
-    if (line.includes('@-moz-document domain("linkedin.com")')) {
-      inCssBlock = true;
-      css += line + "\n";
-      return;
-    }
-
-    if (inCssBlock) {
-      // Check for if statements
-      const ifMatch = line.match(/^if\s+(\w+)\s*{/);
-      if (ifMatch) {
-        const varName = ifMatch[1];
-        if (settings[varName]) {
-          css += line.replace("if", "// if") + "\n{";
+    // Find matching brace for this block
+    let depth = 1;
+    let i = startBlock;
+    for (; i < code.length; i++) {
+      const ch = code[i];
+      if (ch === "{") depth++;
+      else if (ch === "}") {
+        depth--;
+        if (depth === 0) {
+          break;
         }
-        return;
       }
-
-      // Include CSS rules if parent if-condition was true
-      css += line + "\n";
     }
-  });
+    const endBlock = i;
+    const blockContent = code.slice(startBlock, endBlock).trim();
 
-  return css;
-}
+    const enabled = varsState[varName]?.enabled;
+    if (enabled) {
+      result += blockContent + "\n";
+    }
+    lastIndex = endBlock + 1; // skip closing brace
+    ifRegex.lastIndex = lastIndex;
+  }
 
-// Initialize when page loads
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
+  // Any leftover non-conditional CSS (if the style ever has it)
+  const tail = code.slice(lastIndex).trim();
+  if (tail) {
+    result += "\n" + tail;
+  }
+
+  return result;
 }
