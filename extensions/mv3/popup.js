@@ -4,14 +4,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   const updateBtn = document.getElementById("updateBtn");
 
   let styleData = await chrome.storage.local.get(["styleData"]);
+  styleData = styleData || {}; // Ensure styleData exists
 
   const fetchStyle = async () => {
     try {
       updateBtn.disabled = true;
       updateBtn.textContent = "Updating...";
       const res = await fetch("https://userstyles.world/api/style/25558");
-      styleData = await res.json();
-      await chrome.storage.local.set({ styleData, lastUpdate: Date.now() });
+      const newStyleData = await res.json();
+      await chrome.storage.local.set({
+        styleData: newStyleData,
+        lastUpdate: Date.now(),
+      });
+      styleData = newStyleData;
       render();
     } catch (e) {
       console.error(e);
@@ -21,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
-  const render = () => {
+  const render = async () => {
     if (!styleData?.data) return;
 
     const data = styleData.data;
@@ -31,6 +36,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const nameMatch = code.match(/@name\s+([^\n]+)/);
     const versionMatch = code.match(/@version\s+([^\n]+)/);
     titleEl.textContent = `${nameMatch?.[1] || data.name} ${versionMatch?.[1] || ""}`;
+
+    // Get current settings
+    const storedSettings = await chrome.storage.local.get(["settings"]);
 
     // Parse checkboxes and sections
     const vars = [];
@@ -43,7 +51,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else if (line.includes("@var checkbox")) {
         const match = line.match(/@var\s+checkbox\s+([^\s]+)\s+"([^"]+)"/);
         if (match) {
-          vars.push({ id: match[1], label: match[2], section: currentSection });
+          vars.push({
+            id: match[1],
+            label: match[2],
+            section: currentSection,
+          });
         }
       }
     });
@@ -64,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .map(
             (v) => `
           <label>
-            <input type="checkbox" id="${v.id}" ${data.settings?.[v.id] ? "checked" : ""}>
+            <input type="checkbox" id="${v.id}" ${storedSettings.settings?.[v.id] ? "checked" : ""}>
             ${v.label}
           </label>
         `,
@@ -75,28 +87,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       )
       .join("");
 
-    // Bind events
+    // Bind events - vars is now in scope
     vars.forEach((v) => {
       const el = document.getElementById(v.id);
       if (el) {
-        el.addEventListener("change", () => saveSettings());
+        el.addEventListener("change", () => saveSettings(vars));
       }
     });
   };
 
-  const saveSettings = () => {
+  const saveSettings = async (varsList) => {
     const settings = {};
-    vars.forEach((v) => {
+    varsList.forEach((v) => {
       const el = document.getElementById(v.id);
       if (el) settings[v.id] = el.checked;
     });
-    chrome.storage.local.set({ settings });
+    await chrome.storage.local.set({ settings });
   };
 
   updateBtn.addEventListener("click", fetchStyle);
 
   // Load and render
-  render();
+  await render();
 
   // Check daily update
   const lastUpdate = styleData.lastUpdate;
