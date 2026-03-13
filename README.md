@@ -8,7 +8,7 @@ The userstyle started with my frustration of seeing to much premium mentions on 
 
 [![Install with Stylus](https://img.shields.io/badge/Install%20with-Stylus-00adad.svg)](https://userstyles.world/api/style/25558.user.css)
 
-![preview from userstyles](https://userstyles.world/preview/25558/2.webp)
+![miniature illustration of the userstyle](linkedin-hide-ads-and-premium-mentions-userstyle-css.png)
 
 ## TODO / Roadmap
 
@@ -31,7 +31,7 @@ The userstyle started with my frustration of seeing to much premium mentions on 
 
 |Hiding premium mentions everywhere on LinkedIn instead of paying|
 |---|
-|![](https://knowyourmeme.com/photos/2525035-sisyphus-sisyphus-pushing-a-boulder)|
+|![](https://i.kym-cdn.com/photos/images/original/002/525/035/cb5)|
 
 ## V2 - Mobile port
 
