@@ -1,25 +1,24 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Hider MV3",
-  "version": "1.0.0",
-  "description": "Apply a remote userstyle to linkedin.com with checkboxes.",
-  "permissions": ["storage", "alarms"],
-  "host_permissions": [
-    "https://userstyles.world/*",
-    "https://www.linkedin.com/*"
-  ],
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
-  },
+  "version": "1.0",
+  "description": "Hide ads and premium upsells on LinkedIn",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://linkedin.com/*", "https://www.linkedin.com/*"],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "LinkedIn Hider"
   },
   "content_scripts": [
     {
-      "matches": ["*://www.linkedin.com/*"],
+      "matches": ["https://linkedin.com/*", "https://www.linkedin.com/*"],
       "js": ["content.js"],
-      "run_at": "document_end"
+      "run_at": "document_start"
     }
-  ]
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
 }

@@ -1,34 +1,87 @@
-(async () => {
-  const processCSS = (code, settings) => {
-    let css = code;
+let currentStyle = null;
+let styleElement = null;
 
-    // Replace if conditions with enabled/disabled rules
-    Object.entries(settings || {}).forEach(([key, enabled]) => {
-      if (!enabled) {
-        const pattern = new RegExp(`if ${key} \\{([\\s\\S]*?)\\}`, "g");
-        css = css.replace(
-          pattern,
-          (match, rules) =>
-            `/* ${key} disabled */ ${rules.replace(/^\s+/gm, "")}`,
-        );
-      }
-    });
-
-    // Clean up remaining if blocks for enabled vars
-    css = css.replace(/if [a-zA-Z0-9_]+ \{([\s\S]*?)\}/g, "$1");
-
-    return css;
-  };
-
-  const data = await chrome.storage.local.get(["styleData", "settings"]);
-  if (
-    data.styleData?.data &&
-    window.location.hostname.includes("linkedin.com")
-  ) {
-    const css = processCSS(data.styleData.data.code, data.settings);
-
-    const style = document.createElement("style");
-    style.textContent = css;
-    (document.head || document.documentElement).appendChild(style);
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "updateSettings") {
+    updateCSS(message.settings);
   }
-})();
+});
+
+async function init() {
+  const settings = JSON.parse(localStorage.getItem("settings") || "{}");
+  await updateCSS(settings);
+
+  // Watch for storage changes
+  window.addEventListener("storage", (e) => {
+    if (e.key === "settings") {
+      const newSettings = JSON.parse(e.newValue || "{}");
+      updateCSS(newSettings);
+    }
+  });
+}
+
+async function updateCSS(settings) {
+  if (styleElement) {
+    styleElement.remove();
+  }
+
+  // Fetch latest style code
+  try {
+    const response = await fetch("https://userstyles.world/api/style/25558");
+    const data = await response.json();
+    const code = data.data.code;
+
+    // Parse and build CSS based on settings
+    const css = parseAndBuildCSS(code, settings);
+
+    styleElement = document.createElement("style");
+    styleElement.textContent = css;
+    document.head.appendChild(styleElement);
+  } catch (error) {
+    console.error("Failed to update LinkedIn Hider CSS:", error);
+  }
+}
+
+function parseAndBuildCSS(code, settings) {
+  const lines = code.split("\n");
+  let css = "";
+  let inCssBlock = false;
+
+  lines.forEach((line) => {
+    // Skip header
+    if (line.includes("==/UserStyle==")) {
+      return;
+    }
+
+    // Start of CSS block
+    if (line.includes('@-moz-document domain("linkedin.com")')) {
+      inCssBlock = true;
+      css += line + "\n";
+      return;
+    }
+
+    if (inCssBlock) {
+      // Check for if statements
+      const ifMatch = line.match(/^if\s+(\w+)\s*{/);
+      if (ifMatch) {
+        const varName = ifMatch[1];
+        if (settings[varName]) {
+          css += line.replace("if", "// if") + "\n{";
+        }
+        return;
+      }
+
+      // Include CSS rules if parent if-condition was true
+      css += line + "\n";
+    }
+  });
+
+  return css;
+}
+
+// Initialize when page loads
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}

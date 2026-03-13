@@ -2,45 +2,55 @@
 <html>
 
 <head>
+  <meta charset="utf-8">
   <style>
     body {
-      width: 300px;
+      width: 350px;
       padding: 15px;
-      font-family: system-ui;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     h1 {
-      margin: 0 0 15px 0;
-      font-size: 14px;
+      margin: 0 0 20px 0;
+      font-size: 16px;
+      font-weight: 600;
     }
 
     article {
-      margin-bottom: 15px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      margin-bottom: 20px;
+      padding: 12px;
+      border: 1px solid #e1e5e9;
+      border-radius: 8px;
     }
 
-    article h3 {
-      margin: 0 0 8px 0;
-      font-size: 12px;
-      color: #666;
+    article h2 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0066cc;
     }
 
     label {
       display: block;
-      margin: 4px 0;
-      font-size: 13px;
+      margin-bottom: 8px;
+      font-size: 14px;
       cursor: pointer;
+    }
+
+    label input {
+      margin-right: 8px;
+      transform: scale(1.1);
     }
 
     button {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       background: #0066cc;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
     }
 
@@ -52,13 +62,23 @@
       background: #ccc;
       cursor: not-allowed;
     }
+
+    #status {
+      margin-top: 10px;
+      font-size: 12px;
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
   <h1 id="title">Loading...</h1>
-  <div id="checkboxes"></div>
+
+  <div id="sections"></div>
+
   <button id="updateBtn">Update Style</button>
+  <div id="status"></div>
+
   <script src="popup.js"></script>
 </body>
 

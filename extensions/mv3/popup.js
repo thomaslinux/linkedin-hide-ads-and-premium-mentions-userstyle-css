@@ -1,118 +1,127 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const titleEl = document.getElementById("title");
-  const checkboxesEl = document.getElementById("checkboxes");
-  const updateBtn = document.getElementById("updateBtn");
+let styleData = null;
+const API_URL = "https://userstyles.world/api/style/25558";
 
-  let styleData = await chrome.storage.local.get(["styleData"]);
-  styleData = styleData || {}; // Ensure styleData exists
+document.addEventListener("DOMContentLoaded", init);
 
-  const fetchStyle = async () => {
-    try {
-      updateBtn.disabled = true;
-      updateBtn.textContent = "Updating...";
-      const res = await fetch("https://userstyles.world/api/style/25558");
-      const newStyleData = await res.json();
-      await chrome.storage.local.set({
-        styleData: newStyleData,
-        lastUpdate: Date.now(),
-      });
-      styleData = newStyleData;
-      render();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      updateBtn.disabled = false;
-      updateBtn.textContent = "Update Style";
-    }
-  };
+async function init() {
+  await loadSettings();
+  await fetchStyleData();
+  renderCheckboxes();
+  document.getElementById("updateBtn").addEventListener("click", updateStyle);
+}
 
-  const render = async () => {
-    if (!styleData?.data) return;
+async function fetchStyleData() {
+  try {
+    document.getElementById("status").textContent = "Fetching style...";
+    const response = await fetch(API_URL);
+    const data = await response.json();
+    styleData = data.data;
 
-    const data = styleData.data;
-    const code = data.code;
+    const lines = styleData.code.split("\n");
+    const titleMatch = lines
+      .find((l) => l.includes("@name"))
+      .match(/@name\s+(.+)/);
+    const versionMatch = lines
+      .find((l) => l.includes("@version"))
+      .match(/@version\s+(.+)/);
 
-    // Extract @name, @version
-    const nameMatch = code.match(/@name\s+([^\n]+)/);
-    const versionMatch = code.match(/@version\s+([^\n]+)/);
-    titleEl.textContent = `${nameMatch?.[1] || data.name} ${versionMatch?.[1] || ""}`;
-
-    // Get current settings
-    const storedSettings = await chrome.storage.local.get(["settings"]);
-
-    // Parse checkboxes and sections
-    const vars = [];
-    const sections = [];
-    let currentSection = "General";
-
-    code.split("\n").forEach((line) => {
-      if (line.trim().startsWith("# Section")) {
-        currentSection = line.trim().slice(11).trim();
-      } else if (line.includes("@var checkbox")) {
-        const match = line.match(/@var\s+checkbox\s+([^\s]+)\s+"([^"]+)"/);
-        if (match) {
-          vars.push({
-            id: match[1],
-            label: match[2],
-            section: currentSection,
-          });
-        }
-      }
-    });
-
-    // Group by section
-    const grouped = vars.reduce((acc, v) => {
-      acc[v.section] = acc[v.section] || [];
-      acc[v.section].push(v);
-      return acc;
-    }, {});
-
-    checkboxesEl.innerHTML = Object.entries(grouped)
-      .map(
-        ([section, items]) => `
-      <article>
-        <h3>${section}</h3>
-        ${items
-          .map(
-            (v) => `
-          <label>
-            <input type="checkbox" id="${v.id}" ${storedSettings.settings?.[v.id] ? "checked" : ""}>
-            ${v.label}
-          </label>
-        `,
-          )
-          .join("")}
-      </article>
-    `,
-      )
-      .join("");
-
-    // Bind events - vars is now in scope
-    vars.forEach((v) => {
-      const el = document.getElementById(v.id);
-      if (el) {
-        el.addEventListener("change", () => saveSettings(vars));
-      }
-    });
-  };
-
-  const saveSettings = async (varsList) => {
-    const settings = {};
-    varsList.forEach((v) => {
-      const el = document.getElementById(v.id);
-      if (el) settings[v.id] = el.checked;
-    });
-    await chrome.storage.local.set({ settings });
-  };
-
-  updateBtn.addEventListener("click", fetchStyle);
-
-  // Load and render
-  await render();
-
-  // Check daily update
-  const lastUpdate = styleData.lastUpdate;
-  if (!lastUpdate || Date.now() - lastUpdate > 24 * 60 * 60 * 1000) {
-    fetchStyle();
+    document.getElementById("title").textContent =
+      `${titleMatch?.[1] || "LinkedIn Hider"} ${versionMatch?.[1] || ""}`;
+  } catch (error) {
+    console.error("Failed to fetch style:", error);
+    document.getElementById("status").textContent = "Failed to load style data";
   }
-});
+}
+
+function renderCheckboxes() {
+  if (!styleData) return;
+
+  const lines = styleData.code.split("\n");
+  const sections = {};
+  let currentSection = "General";
+
+  // Parse sections and checkboxes
+  lines.forEach((line) => {
+    if (line.trim().startsWith("# Section")) {
+      currentSection = line.replace("# Section", "").trim();
+      sections[currentSection] = [];
+    } else if (line.includes("@var checkbox")) {
+      const match = line.match(/@var\s+checkbox\s+(\w+)\s+"([^"]+)"\s+(\d+)/);
+      if (match) {
+        const [_, id, name, defaultValue] = match;
+        sections[currentSection].push({
+          id,
+          name,
+          defaultValue: parseInt(defaultValue),
+        });
+      }
+    }
+  });
+
+  const sectionsDiv = document.getElementById("sections");
+  Object.entries(sections).forEach(([sectionName, checkboxes]) => {
+    if (checkboxes.length === 0) return;
+
+    const article = document.createElement("article");
+    article.innerHTML = `<h2>${sectionName}</h2>`;
+
+    checkboxes.forEach(({ id, name, defaultValue }) => {
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = id;
+
+      const settings = JSON.parse(localStorage.getItem("settings") || "{}");
+      checkbox.checked = settings[id] !== false;
+
+      checkbox.addEventListener("change", () => saveSettings());
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(name));
+      article.appendChild(label);
+    });
+
+    sectionsDiv.appendChild(article);
+  });
+}
+
+async function saveSettings() {
+  const settings = {};
+  document.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    settings[cb.id] = cb.checked;
+  });
+  localStorage.setItem("settings", JSON.stringify(settings));
+
+  // Update content scripts on all LinkedIn tabs
+  const tabs = await chrome.tabs.query({ url: "*://*.linkedin.com/*" });
+  tabs.forEach((tab) =>
+    chrome.tabs.sendMessage(tab.id, { action: "updateSettings", settings }),
+  );
+}
+
+async function updateStyle() {
+  const btn = document.getElementById("updateBtn");
+  btn.disabled = true;
+  btn.textContent = "Updating...";
+
+  try {
+    await fetchStyleData();
+    renderCheckboxes();
+    document.getElementById("status").textContent =
+      "Style updated successfully";
+  } catch (error) {
+    document.getElementById("status").textContent = "Update failed";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Update Style";
+    setTimeout(
+      () => (document.getElementById("status").textContent = ""),
+      3000,
+    );
+  }
+}
+
+async function loadSettings() {
+  // Ensure settings are loaded
+  const settings = JSON.parse(localStorage.getItem("settings") || "{}");
+  localStorage.setItem("settings", JSON.stringify(settings));
+}
