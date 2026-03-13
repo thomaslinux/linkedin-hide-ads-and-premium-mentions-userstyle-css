@@ -9,17 +9,37 @@
       font-family: system-ui, sans-serif;
       font-size: 13px;
       margin: 10px;
-      min-width: 260px;
+      min-width: 280px;
+      max-height: 400px;
+      overflow-y: auto;
     }
 
     .var-item {
       display: flex;
-      align-items: center;
-      margin-bottom: 4px;
+      align-items: flex-start;
+      margin-bottom: 6px;
+      padding: 4px 0;
+    }
+
+    .var-item input[type="checkbox"] {
+      margin-top: 2px;
+      margin-right: 8px;
+      flex-shrink: 0;
     }
 
     .var-item label {
-      margin-left: 6px;
+      cursor: pointer;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a73e8;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 4px;
     }
   </style>
 </head>
