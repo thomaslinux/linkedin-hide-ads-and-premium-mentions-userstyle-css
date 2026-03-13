@@ -6,9 +6,12 @@ The userstyle started with my frustration of seeing to much premium mentions on 
 
 ## Installation
 
+You can install the userstyle in the Stylus extension by using this link :
 [![Install with Stylus](https://img.shields.io/badge/Install%20with-Stylus-00adad.svg)](https://userstyles.world/api/style/25558.user.css)
 
-![miniature illustration of the userstyle](linkedin-hide-ads-and-premium-mentions-userstyle-css.png)
+|miniature illustration of the userstyle|
+|---|
+|![miniature illustration of the userstyle](linkedin-hide-ads-and-premium-mentions-userstyle-css.png)|
 
 ## TODO / Roadmap
 
@@ -29,7 +32,7 @@ The userstyle started with my frustration of seeing to much premium mentions on 
 
 - [-] Hide all premium mentions everywhere this task will never end as LinkedIn finds new places to place their beg to try premium
 
-|Hiding premium mentions everywhere on LinkedIn instead of paying|
+|Hiding premium mentions instead of paying|
 |---|
 |![](https://i.kym-cdn.com/photos/images/original/002/525/035/cb5)|
 
