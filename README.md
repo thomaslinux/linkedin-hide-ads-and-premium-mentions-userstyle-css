@@ -8,7 +8,7 @@ The userstyle started with my frustration of seeing to much premium mentions on 
 
 ## Installation
 
-[![Install with Stylus](https://img.shields.io/badge/Install%20with-Stylus-00adad.svg)]([https://userstyles.world/style/25558])
+[![Install with Stylus](https://img.shields.io/badge/Install%20with-Stylus-00adad.svg)]([https://userstyles.world/api/style/25558.user.css])
 
 ## TODO / Roadmap
 
