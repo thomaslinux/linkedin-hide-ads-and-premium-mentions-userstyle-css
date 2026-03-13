@@ -8,11 +8,7 @@ The userstyle started with my frustration of seeing to much premium mentions on 
 
 ## Installation
 
-Install from :
-
-https://userstyles.world/style/25558
-
-The site will prompt you to install the stylus extension on your browser first.
+[![Install with Stylus](https://img.shields.io/badge/Install%20with-Stylus-00adad.svg)]([https://userstyles.world/style/25558])
 
 ## TODO / Roadmap
 
