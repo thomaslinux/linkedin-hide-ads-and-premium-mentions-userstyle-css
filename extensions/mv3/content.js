@@ -1,90 +1,34 @@
 (async () => {
-  const { userstyleCSS, userstyleVars } = await chrome.storage.local.get([
-    "userstyleCSS",
-    "userstyleVars"
-  ]);
-  if (!userstyleCSS || !userstyleVars) return;
+  const processCSS = (code, settings) => {
+    let css = code;
 
-  const finalCSS = buildCSS(userstyleCSS, userstyleVars);
-
-  const styleEl = document.createElement("style");
-  styleEl.setAttribute("data-linkedin-userstyle", "true");
-  styleEl.textContent = finalCSS;
-  document.documentElement.appendChild(styleEl);
-
-  // Re-apply when popup changes settings
-  chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.type === "rebuildCSS") {
-      chrome.storage.local.get(["userstyleCSS", "userstyleVars"], ({ userstyleCSS, userstyleVars }) => {
-        const css = buildCSS(userstyleCSS, userstyleVars);
-        styleEl.textContent = css;
-      });
-    }
-  });
-})();
-
-/**
- * Very simple parser tailored to this style:
- * @-moz-document domain("linkedin.com") {
- *   if varName {
- *     ...
- *   }
- *   if otherVar {
- *     ...
- *   }
- * }
- */
-function buildCSS(source, varsState) {
-  // Remove header comment and @-moz-document wrapper
-  let code = source;
-
-  // Remove leading comment block
-  code = code.replace(/\/\*[\s\S]*?\*\//, "");
-
-  // Extract inside of @-moz-document
-  const docMatch = code.match(/@-moz-document[^{]+\{([\s\S]*)\}\s*$/);
-  if (!docMatch) return "";
-  code = docMatch[1];
-
-  let result = "";
-
-  const ifRegex = /if\s+([a-zA-Z0-9_]+)\s*\{/g;
-  let lastIndex = 0;
-  let m;
-
-  while ((m = ifRegex.exec(code)) !== null) {
-    const varName = m[1];
-    const startBlock = ifRegex.lastIndex;
-
-    // Find matching brace for this block
-    let depth = 1;
-    let i = startBlock;
-    for (; i < code.length; i++) {
-      const ch = code[i];
-      if (ch === "{") depth++;
-      else if (ch === "}") {
-        depth--;
-        if (depth === 0) {
-          break;
-        }
+    // Replace if conditions with enabled/disabled rules
+    Object.entries(settings || {}).forEach(([key, enabled]) => {
+      if (!enabled) {
+        const pattern = new RegExp(`if ${key} \\{([\\s\\S]*?)\\}`, "g");
+        css = css.replace(
+          pattern,
+          (match, rules) =>
+            `/* ${key} disabled */ ${rules.replace(/^\s+/gm, "")}`,
+        );
       }
-    }
-    const endBlock = i;
-    const blockContent = code.slice(startBlock, endBlock).trim();
+    });
 
-    const enabled = varsState[varName]?.enabled;
-    if (enabled) {
-      result += blockContent + "\n";
-    }
-    lastIndex = endBlock + 1; // skip closing brace
-    ifRegex.lastIndex = lastIndex;
+    // Clean up remaining if blocks for enabled vars
+    css = css.replace(/if [a-zA-Z0-9_]+ \{([\s\S]*?)\}/g, "$1");
+
+    return css;
+  };
+
+  const data = await chrome.storage.local.get(["styleData", "settings"]);
+  if (
+    data.styleData?.data &&
+    window.location.hostname.includes("linkedin.com")
+  ) {
+    const css = processCSS(data.styleData.data.code, data.settings);
+
+    const style = document.createElement("style");
+    style.textContent = css;
+    (document.head || document.documentElement).appendChild(style);
   }
-
-  // Any leftover non-conditional CSS (if the style ever has it)
-  const tail = code.slice(lastIndex).trim();
-  if (tail) {
-    result += "\n" + tail;
-  }
-
-  return result;
-}
+})();
