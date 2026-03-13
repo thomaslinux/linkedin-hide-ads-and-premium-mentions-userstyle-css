@@ -6,10 +6,15 @@ The userstyle started with my frustration of seeing to much premium mentions on 
 
 ## Installation
 
-You can install the userstyle in the Stylus extension by using this link :
+You can visit the userstyles.world homepage of this userstyle here :
+
+https://userstyles.world/style/25558/tl9-hide-ads-and-try-premium-messages-linkedin
+
+**If you have stylus installed**, you can install the userstyle with the following button :
+
 [![Install with Stylus](https://img.shields.io/badge/Install%20with-Stylus-00adad.svg)](https://userstyles.world/api/style/25558.user.css)
 
-|miniature illustration of the userstyle|
+|Miniature illustration of the userstyle|
 |---|
 |![miniature illustration of the userstyle](linkedin-hide-ads-and-premium-mentions-userstyle-css.png)|
 
