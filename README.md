@@ -14,9 +14,9 @@ https://userstyles.world/style/25558/tl9-hide-ads-and-try-premium-messages-linke
 
 [![Install with Stylus](https://img.shields.io/badge/Install%20with-Stylus-00adad.svg)](https://userstyles.world/api/style/25558.user.css)
 
-|Miniature illustration of the userstyle|
+|Miniature of the userstyle|
 |---|
-|![miniature illustration of the userstyle](linkedin-hide-ads-and-premium-mentions-userstyle-css.png)|
+|![miniature of the userstyle](linkedin-hide-ads-and-premium-mentions-userstyle-css.png)|
 
 ## TODO / Roadmap
 
