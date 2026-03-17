@@ -47,8 +47,11 @@ On the users side, they have the choice to update automaticly or manually ; read
 
 If I wished to make an extension out of the userstyle, it would just be a wrapper for the Stylus extension suited only for my style, or else I would just be remaking Stylus.
 
-The wrapper is not hard to make. As a matter of fact, perplexity was able to make it for me.
-But it's the better the users use OpenStyles/Stylus, as this opensource extension is really easy to use, already working and made me curious about modifying pages in the first place.
+The wrapper is not hard to make. As a matter of fact, perplexity was able to make it for me. I found the api link to fetch the updates, and from the api call, with javascript, it's possible to make the configuration interface.
+
+I like to think it would be better for the users to use OpenStyles/Stylus. As this opensource extension is really easy to use, already working and made me curious about modifying pages in the first place. And there is a lot of userstyles they could discover for a lot of other pages.
+
+
 
 ## TODO / Roadmap
 
