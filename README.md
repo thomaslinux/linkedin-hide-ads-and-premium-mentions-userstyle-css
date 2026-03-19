@@ -25,6 +25,24 @@ As I have the OpenStyles/Stylus extension installed on my browser, I first looke
 
 <img height="280px" alt="thanos saying fine I'll do it myself meme" src="https://newfastuff.com/wp-content/uploads/2019/04/a28z8Yf.png" />
 
+## History - From a basic userstyle to a complete product
+
+The first version was very simple, no interface. The objective was to hide the most visible Try Premium mentions. I used the classNames I saw in the inspector, but it didn't hold the changes for to long.
+As a matter of fact, the classNames changed. They know have mysterious names, written in enchanting table language (if you don't believe me, try inspecting the LinkedIn page with dev tools, you'll see what I mean). So I had to get creative, and so I discovered a css feature we don't here about often. :has
+
+```css
+#todays-games-entrypoint-title,
+div:has(> a[href*="games"]),
+article:has(a[href*="games"]),
+a[href*="games"] {
+  display: none !important;
+}
+```
+
+The above code hides every element that has a link to linkedin games, using the parent selector :has https://caniuse.com/?search=%3Ahas
+
+Then 
+
 ### Why Stylus and CSS and not an extension
 
 **- OpenStyles/Stylus has an existing userbase, and every function I need to make a configuration interface.**
@@ -62,7 +80,7 @@ I like to think it would be better for the users to use OpenStyles/Stylus. As th
 
 ## V1
 
-- [x] Disable/enable filters from the stylus interface
+- [x] Disable/enable filters from a stylus configurable user interface
 
 ### Extras
 
